@@ -1,5 +1,6 @@
 
 import streamlit as st
+from application_pages.analyze_data import calculate_control_quality_score, suggest_substantiation_method
 
 def run_evaluate_control():
     st.header("Evaluate Control")
@@ -20,8 +21,7 @@ def run_evaluate_control():
 
     if st.button("Calculate Score & Method"):
         try:
-            from calculate_control_quality_score import calculate_control_quality_score
-            from suggest_substantiation_method import suggest_substantiation_method
+
             control_quality_score = calculate_control_quality_score(control_type, key_nonkey, manual_automated, implementation_quality_rating)
             substantiation_method = suggest_substantiation_method(control_type, key_nonkey, manual_automated, risk_level)
 

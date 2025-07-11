@@ -69,7 +69,7 @@ def validate_and_preprocess_data(df):
 
     for col in ['Implementation_Frequency', 'Design_Quality_Rating']:
         df[col] = pd.to_numeric(df[col], errors='coerce')
-        if df[col].isnull().any() or not all(pd.api.types.is_numeric_dtype(df[col])):
+        if df[col].isnull().any() or not pd.api.types.is_numeric_dtype(df[col]):
             st.error(f"Column '{col}' must contain numbers.")
             return None
 
@@ -171,7 +171,7 @@ def run_analyze_data():
 
         # Calculate Control Quality Score
         try:
-            df['Control_Quality_Score'] = df.apply(lambda row: calculate_control_quality_score(row['Control_Type'], row['Key_NonKey'], row['Manual_Automated'], row['Design_Quality_Rating']), axis=1)
+            df['Control_Quality_Score'] = df.apply(lambda row: calculate_control_quality_score(row['Control_Type'], row['Key_NonKey'], row['Manual_Automated'], row['Implementation_Frequency']), axis=1)
         except Exception as e:
             st.error(f"Error calculating Control Quality Score: {e}")
 
