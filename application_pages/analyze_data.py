@@ -1,23 +1,35 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import random
 
-def generate_synthetic_control_data(num_records, control_type, key_nonkey, manual_automated, risk_level, implementation_frequency, design_quality_rating):
-    """Generates synthetic control data DataFrame."""
-    if not isinstance(num_records, int):
-        raise TypeError("num_records must be an integer")
+def generate_synthetic_control_data(num_records):
+    """
+    Generates synthetic control data for simulation purposes.
+
+    Args:
+        num_records (int): Number of records to generate.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing synthetic control data.
+    """
+    import pandas as pd
+    import random
+
+    control_types = ["Preventative", "Detective"]
+    key_nonkey_options = ["Key", "Non-Key"]
+    manual_automated_options = ["Manual", "Automated"]
+    risk_level_options = ["High", "Medium", "Low"]
+    implementation_quality_ratings = [1, 2, 3, 4, 5]
 
     data = {
-        "Control_Type": [random.choice(control_type) if control_type else None for _ in range(num_records)],
-        "Key_NonKey": [random.choice(key_nonkey) if key_nonkey else None for _ in range(num_records)],
-        "Manual_Automated": [random.choice(manual_automated) if manual_automated else None for _ in range(num_records)],
-        "Risk_Level": [random.choice(risk_level) if risk_level else None for _ in range(num_records)],
-        "Implementation_Frequency": [random.choice(implementation_frequency) if implementation_frequency else None for _ in range(num_records)],
-        "Design_Quality_Rating": [random.choice(design_quality_rating) if design_quality_rating else None for _ in range(num_records)],
-        "Control_ID": [f"C{i+1}" for i in range(num_records)] # Added Control_ID for validation
+        "Control_Type": [random.choice(control_types) for _ in range(num_records)],
+        "Key_NonKey": [random.choice(key_nonkey_options) for _ in range(num_records)],
+        "Manual_Automated": [random.choice(manual_automated_options) for _ in range(num_records)],
+        "Risk_Level": [random.choice(risk_level_options) for _ in range(num_records)],
+        "Implementation_Quality_Rating": [random.choice(implementation_quality_ratings) for _ in range(num_records)],
     }
+
     return pd.DataFrame(data)
 
 def load_control_data(file_path, generate_synthetic):
@@ -44,7 +56,7 @@ def load_control_data(file_path, generate_synthetic):
         design_quality_rating_range = [1, 2, 3, 4, 5]
 
         num_records = st.slider("Number of records", min_value=5, max_value=1000, value=100, help="Number of synthetic control records to generate. Adjust for performance.")
-        df = generate_synthetic_control_data(num_records, control_types, key_nonkey_options, manual_automated_options, risk_level_options, implementation_frequency_range, design_quality_rating_range)
+        df = generate_synthetic_control_data(num_records)
         return df
     else:
         st.error("Please upload a file or generate synthetic data.")
@@ -150,41 +162,249 @@ def suggest_substantiation_method(control_type, key_nonkey, manual_automated, ri
 
 def run_analyze_data():
     st.header("Analyze Control Data")
-
-    uploaded_file = st.file_uploader("Upload your control data (CSV format)")
-    generate_synthetic = st.checkbox("Generate synthetic data instead")
-
-    df = load_control_data(uploaded_file, generate_synthetic)
-
+    
+    # Move the slider to sidebar
+    with st.sidebar:
+        st.divider()
+        st.subheader("Data Generation Settings")
+        num_records = st.slider("Number of records", min_value=5, max_value=1000, value=100, 
+                           help="Number of synthetic control records to generate. Adjust for performance.")
+        st.info("Using synthetic data for analysis")
+    
+    # Create fresh synthetic data when the slider changes
+    if 'previous_num_records' not in st.session_state or st.session_state.previous_num_records != num_records:
+        df = generate_synthetic_control_data(num_records)
+        df['Implementation_Frequency'] = [random.randint(1, 5) for _ in range(num_records)]
+        df['Design_Quality_Rating'] = [random.randint(1, 5) for _ in range(num_records)]
+        df['Control_ID'] = [f'CTRL_{i:03d}' for i in range(1, num_records + 1)]
+        st.session_state.previous_num_records = num_records
+        st.session_state.current_df = df
+    else:
+        df = st.session_state.current_df
+    
     if df is not None:
         df = validate_and_preprocess_data(df)
 
     if df is not None and not df.empty:
-        st.subheader("Data Table")
-        st.dataframe(df)
-
-        st.subheader("Summary Statistics")
-        st.write(df.describe())
-        for col in df.select_dtypes(include='object'):
-            st.write(f"Value counts for column '{col}':")
-            st.write(df[col].value_counts())
-
-        # Calculate Control Quality Score
+        # Calculate Control Quality Score first
         try:
             df['Control_Quality_Score'] = df.apply(lambda row: calculate_control_quality_score(row['Control_Type'], row['Key_NonKey'], row['Manual_Automated'], row['Implementation_Frequency']), axis=1)
         except Exception as e:
             st.error(f"Error calculating Control Quality Score: {e}")
 
-        st.subheader("Visualizations")
-        try:
-            fig_scatter = px.scatter(df, x="Implementation_Frequency", y="Design_Quality_Rating", color="Control_Type", hover_data=["Control_ID", "Control_Quality_Score"],
-                                    title="Relationship between Implementation Frequency and Design Quality")
-            fig_scatter.update_layout(xaxis_title="Implementation Frequency (1-5)", yaxis_title="Design Quality Rating (1-5)")
-            st.plotly_chart(fig_scatter)
+        # Show visualizations first
+        st.subheader("Data Analysis")
 
-            # Bar chart of average Control Quality Score by Control Type
-            df_grouped = df.groupby("Control_Type")["Control_Quality_Score"].mean().reset_index()
-            fig_bar = px.bar(df_grouped, x="Control_Type", y="Control_Quality_Score", title="Average Control Quality Score by Control Type")
-            st.plotly_chart(fig_bar)
+        # After visualizations, show the data table
+        st.subheader("Data Table")
+        with st.expander("View Raw Data"):
+            st.dataframe(df, use_container_width=True)
+        
+        try:
+            # 1. Control Types Distribution Chart
+            st.subheader("📊 Control Types Distribution")
+            st.markdown("""
+            **What this chart shows:** The distribution of Preventative vs Detective controls in your dataset.
+            
+            **Key insights:**
+            - **Preventative controls** are designed to prevent issues before they occur (e.g., authorization requirements, segregation of duties)
+            - **Detective controls** identify issues after they happen (e.g., reconciliations, monitoring reports)
+            - A balanced portfolio typically has more preventative controls, but the optimal mix depends on your risk appetite
+            """)
+            
+            control_counts = df['Control_Type'].value_counts()
+            fig_bar = px.bar(
+                x=control_counts.index,
+                y=control_counts.values,
+                title="Distribution of Control Types",
+                labels={"x": "Control Type", "y": "Count"},
+                color=control_counts.index,
+                color_discrete_map={'Preventative': '#2E8B57', 'Detective': '#4682B4'}
+            )
+            fig_bar.update_layout(showlegend=False)
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+            # 2. Risk Level Distribution Chart
+            st.subheader("🎯 Risk Level Distribution")
+            st.markdown("""
+            **What this chart shows:** The proportion of controls categorized by risk level across your control environment.
+            
+            **Key insights:**
+            - **High Risk** controls require more rigorous testing and monitoring due to their critical nature
+            - **Medium Risk** controls need regular attention but with less intensive procedures
+            - **Low Risk** controls can often be tested less frequently or with lighter procedures
+            - An organization with many high-risk controls may need to invest more in control strengthening
+            """)
+            
+            risk_counts = df['Risk_Level'].value_counts()
+            fig_pie = px.pie(
+                values=risk_counts.values,
+                names=risk_counts.index,
+                title="Risk Level Distribution",
+                color_discrete_map={'High': '#DC143C', 'Medium': '#FF8C00', 'Low': '#32CD32'}
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+            # 3. Control Quality Score Analysis
+            st.subheader("⭐ Average Control Quality Score by Type")
+            st.markdown("""
+            **What this chart shows:** The average Control Quality Score for each control type, helping identify which controls are performing better.
+            
+            **How Quality Score is calculated:**
+            - **Control Type:** Preventative (+5 points) vs Detective (+2 points)
+            - **Key vs Non-Key:** Key controls (+3 points) vs Non-Key (+1 point)
+            - **Automation:** Automated (+2 points) vs Manual (+1 point)
+            - **Implementation Quality:** Rating from 1-5 (adds 0-4 points)
+            
+            **Key insights:**
+            - Higher scores indicate more robust and reliable controls
+            - Preventative controls typically score higher due to their proactive nature
+            - Scores help prioritize improvement efforts and resource allocation
+            """)
+            
+            avg_scores = df.groupby('Control_Type')['Control_Quality_Score'].mean().reset_index()
+            fig_quality = px.bar(
+                avg_scores,
+                x='Control_Type',
+                y='Control_Quality_Score',
+                title="Average Control Quality Score by Type",
+                labels={"Control_Quality_Score": "Average Quality Score"},
+                color='Control_Type',
+                color_discrete_map={'Preventative': '#2E8B57', 'Detective': '#4682B4'}
+            )
+            fig_quality.update_layout(showlegend=False)
+            st.plotly_chart(fig_quality, use_container_width=True)
+
+            # 4. Manual vs Automated Controls Distribution
+            st.subheader("🤖 Manual vs Automated Controls")
+            st.markdown("""
+            **What this chart shows:** The split between manual and automated controls in your environment.
+            
+            **Key insights:**
+            - **Automated controls** are generally more reliable and less prone to human error
+            - **Manual controls** offer flexibility but require more oversight and training
+            - Higher automation rates typically indicate a more mature control environment
+            - Consider automation opportunities for high-frequency or error-prone manual controls
+            """)
+            
+            automation_counts = df['Manual_Automated'].value_counts()
+            fig_automation = px.pie(
+                values=automation_counts.values,
+                names=automation_counts.index,
+                title="Manual vs Automated Controls Distribution",
+                color_discrete_map={'Automated': '#4CAF50', 'Manual': '#FF9800'}
+            )
+            st.plotly_chart(fig_automation, use_container_width=True)
+
+            # 5. Key vs Non-Key Controls Analysis
+            st.subheader("🔑 Key vs Non-Key Controls")
+            st.markdown("""
+            **What this chart shows:** The distribution of key controls versus non-key controls.
+            
+            **Key insights:**
+            - **Key controls** are critical for preventing or detecting material misstatements
+            - **Non-Key controls** provide additional layers of protection but are less critical
+            - Key controls require more rigorous testing and monitoring procedures
+            - A balanced approach ensures comprehensive coverage without over-testing
+            """)
+            
+            key_counts = df['Key_NonKey'].value_counts()
+            fig_key = px.bar(
+                x=key_counts.index,
+                y=key_counts.values,
+                title="Key vs Non-Key Controls Distribution",
+                labels={"x": "Control Classification", "y": "Count"},
+                color=key_counts.index,
+                color_discrete_map={'Key': '#E91E63', 'Non-Key': '#9C27B0'}
+            )
+            fig_key.update_layout(showlegend=False)
+            st.plotly_chart(fig_key, use_container_width=True)
+
+            # Key metrics in a clean layout
+            st.subheader("📈 Key Performance Indicators")
+            st.markdown("""
+            **Summary metrics** that provide quick insights into your control environment's overall health and characteristics.
+            """)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                avg_quality = df['Control_Quality_Score'].mean()
+                st.metric(
+                    "Average Control Quality", 
+                    f"{avg_quality:.2f}",
+                    help="Higher scores indicate more robust controls (Range: 1-15)"
+                )
+                
+            with col2:
+                high_risk_count = len(df[df['Risk_Level'] == 'High'])
+                high_risk_pct = (high_risk_count / len(df)) * 100
+                st.metric(
+                    "High Risk Controls", 
+                    f"{high_risk_count} ({high_risk_pct:.1f}%)",
+                    help="Number and percentage of high-risk controls requiring intensive monitoring"
+                )
+                
+            with col3:
+                automated_count = len(df[df['Manual_Automated'] == 'Automated'])
+                automation_rate = (automated_count / len(df)) * 100
+                st.metric(
+                    "Automation Rate", 
+                    f"{automation_rate:.1f}%",
+                    help="Percentage of controls that are automated (higher is generally better)"
+                )
+                
+            with col4:
+                key_controls = len(df[df['Key_NonKey'] == 'Key'])
+                key_control_pct = (key_controls / len(df)) * 100
+                st.metric(
+                    "Key Controls", 
+                    f"{key_controls} ({key_control_pct:.1f}%)",
+                    help="Number and percentage of key controls critical for risk mitigation"
+                )
+
+            # Additional insights and recommendations
+            st.subheader("💡 Insights & Recommendations")
+            
+            # Calculate some insights
+            total_controls = len(df)
+            preventative_pct = (len(df[df['Control_Type'] == 'Preventative']) / total_controls) * 100
+            detective_pct = 100 - preventative_pct
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("#### 🎯 **Control Mix Analysis**")
+                if preventative_pct > 60:
+                    st.success(f"✅ Good preventative control coverage ({preventative_pct:.1f}%)")
+                elif preventative_pct > 40:
+                    st.warning(f"⚠️ Moderate preventative control coverage ({preventative_pct:.1f}%)")
+                else:
+                    st.error(f"❌ Low preventative control coverage ({preventative_pct:.1f}%)")
+                
+                if automation_rate > 50:
+                    st.success(f"✅ Good automation rate ({automation_rate:.1f}%)")
+                else:
+                    st.info(f"💡 Consider increasing automation ({automation_rate:.1f}% current)")
+            
+            with col2:
+                st.markdown("#### 📊 **Risk Profile**")
+                if high_risk_pct > 30:
+                    st.warning(f"⚠️ High proportion of high-risk controls ({high_risk_pct:.1f}%)")
+                    st.info("💡 Consider control strengthening initiatives")
+                else:
+                    st.success(f"✅ Balanced risk profile ({high_risk_pct:.1f}% high-risk)")
+                
+                if avg_quality < 8:
+                    st.warning("⚠️ Below average control quality - focus on improvements")
+                elif avg_quality > 10:
+                    st.success("✅ Strong overall control quality")
+                else:
+                    st.info("ℹ️ Moderate control quality - room for enhancement")
+
         except Exception as e:
             st.error(f"Error creating visualizations: {e}")
+
+        # Ensure all rows are read from the dataset
+        if df.shape[0] < 100:
+            st.warning("The dataset contains fewer rows than expected. Please check the file or preprocessing steps.")
