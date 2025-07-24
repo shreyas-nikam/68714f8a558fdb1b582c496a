@@ -202,7 +202,7 @@ def run_analyze_data():
         
         try:
             # 1. Control Types Distribution Chart
-            st.subheader("📊 Control Types Distribution")
+            st.subheader("Control Types Distribution")
             st.markdown("""
             **What this chart shows:** The distribution of Preventative vs Detective controls in your dataset.
             
@@ -225,7 +225,7 @@ def run_analyze_data():
             st.plotly_chart(fig_bar, use_container_width=True)
 
             # 2. Risk Level Distribution Chart
-            st.subheader("🎯 Risk Level Distribution")
+            st.subheader("Risk Level Distribution")
             st.markdown("""
             **What this chart shows:** The proportion of controls categorized by risk level across your control environment.
             
@@ -246,7 +246,7 @@ def run_analyze_data():
             st.plotly_chart(fig_pie, use_container_width=True)
 
             # 3. Control Quality Score Analysis
-            st.subheader("⭐ Average Control Quality Score by Type")
+            st.subheader("Average Control Quality Score by Type")
             st.markdown("""
             **What this chart shows:** The average Control Quality Score for each control type, helping identify which controls are performing better.
             
@@ -276,7 +276,7 @@ def run_analyze_data():
             st.plotly_chart(fig_quality, use_container_width=True)
 
             # 4. Manual vs Automated Controls Distribution
-            st.subheader("🤖 Manual vs Automated Controls")
+            st.subheader("Manual vs Automated Controls")
             st.markdown("""
             **What this chart shows:** The split between manual and automated controls in your environment.
             
@@ -297,7 +297,7 @@ def run_analyze_data():
             st.plotly_chart(fig_automation, use_container_width=True)
 
             # 5. Key vs Non-Key Controls Analysis
-            st.subheader("🔑 Key vs Non-Key Controls")
+            st.subheader("Key vs Non-Key Controls")
             st.markdown("""
             **What this chart shows:** The distribution of key controls versus non-key controls.
             
@@ -321,7 +321,7 @@ def run_analyze_data():
             st.plotly_chart(fig_key, use_container_width=True)
 
             # Key metrics in a clean layout
-            st.subheader("📈 Key Performance Indicators")
+            st.subheader("Key Performance Indicators")
             st.markdown("""
             **Summary metrics** that provide quick insights into your control environment's overall health and characteristics.
             """)
@@ -364,7 +364,7 @@ def run_analyze_data():
                 )
 
             # Additional insights and recommendations
-            st.subheader("💡 Insights & Recommendations")
+            st.subheader("Insights & Recommendations")
             
             # Calculate some insights
             total_controls = len(df)
@@ -374,33 +374,33 @@ def run_analyze_data():
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("#### 🎯 **Control Mix Analysis**")
+                st.markdown("#### **Control Mix Analysis**")
                 if preventative_pct > 60:
-                    st.success(f"✅ Good preventative control coverage ({preventative_pct:.1f}%)")
+                    st.success(f"Good preventative control coverage ({preventative_pct:.1f}%)")
                 elif preventative_pct > 40:
-                    st.warning(f"⚠️ Moderate preventative control coverage ({preventative_pct:.1f}%)")
+                    st.warning(f"Moderate preventative control coverage ({preventative_pct:.1f}%)")
                 else:
-                    st.error(f"❌ Low preventative control coverage ({preventative_pct:.1f}%)")
+                    st.error(f"Low preventative control coverage ({preventative_pct:.1f}%)")
                 
                 if automation_rate > 50:
-                    st.success(f"✅ Good automation rate ({automation_rate:.1f}%)")
+                    st.success(f"Good automation rate ({automation_rate:.1f}%)")
                 else:
-                    st.info(f"💡 Consider increasing automation ({automation_rate:.1f}% current)")
+                    st.info(f"Consider increasing automation ({automation_rate:.1f}% current)")
             
             with col2:
-                st.markdown("#### 📊 **Risk Profile**")
+                st.markdown("#### **Risk Profile**")
                 if high_risk_pct > 30:
-                    st.warning(f"⚠️ High proportion of high-risk controls ({high_risk_pct:.1f}%)")
-                    st.info("💡 Consider control strengthening initiatives")
+                    st.warning(f"High proportion of high-risk controls ({high_risk_pct:.1f}%)")
+                    st.info("Consider control strengthening initiatives")
                 else:
-                    st.success(f"✅ Balanced risk profile ({high_risk_pct:.1f}% high-risk)")
+                    st.success(f"Balanced risk profile ({high_risk_pct:.1f}% high-risk)")
                 
                 if avg_quality < 8:
-                    st.warning("⚠️ Below average control quality - focus on improvements")
+                    st.warning("Below average control quality - focus on improvements")
                 elif avg_quality > 10:
-                    st.success("✅ Strong overall control quality")
+                    st.success("Strong overall control quality")
                 else:
-                    st.info("ℹ️ Moderate control quality - room for enhancement")
+                    st.info("Moderate control quality - room for enhancement")
 
         except Exception as e:
             st.error(f"Error creating visualizations: {e}")
