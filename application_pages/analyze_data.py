@@ -272,21 +272,22 @@ def run_analyze_data():
         sample_template = generate_synthetic_control_data(20)
         csv_template = sample_template.to_csv(index=False)
         
-        col1, col2 = st.columns([1, 3])
-        with col1:
+        col1, col2 = st.columns([6, 1])
+        with col2:
             st.download_button(
-                label="Download Sample Template",
+                label="Download Sample Dataset",
                 data=csv_template,
                 file_name="control_data_template.csv",
                 mime="text/csv",
-                help="Download this sample CSV file, edit it with your data, and upload it back"
+                help="Download this sample CSV file, edit it with your data, and upload it back",
+                use_container_width=True,
             )
         
-        with col2:
+        with col1:
             st.info("The template contains 20 sample records. Replace them with your actual control data while keeping the exact column names and format.")
         
         # Show expandable template preview
-        with st.expander("View Sample Template Format", expanded=False):
+        with st.expander("View Sample Dataset Format", expanded=False):
             display_sample_template()
         
         st.divider()
