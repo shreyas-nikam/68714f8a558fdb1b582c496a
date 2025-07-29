@@ -1,12 +1,12 @@
 
 import streamlit as st
-st.set_page_config(page_title="Control Effectiveness Evaluator", layout="wide")
+st.set_page_config(page_title="QuLabs: Control Effectiveness Evaluator", layout="wide")
 st.sidebar.image("https://www.quantuniversity.com/assets/img/logo5.jpg")
 st.sidebar.divider()
 st.title("QuLab: Control Effectiveness Evaluator")
 st.divider()
 st.markdown("""
-Welcome to the Control Effectiveness Evaluator! This application helps you assess the design and implementation quality of operational controls. You can either upload your own control data in CSV format or generate synthetic data to explore different control scenarios. The application provides tools for defining control characteristics, calculating a 'Control Quality Score', and suggesting an appropriate 'Control Substantiation Method'.
+Welcome to the Control Effectiveness Evaluator! This application helps you assess the design and implementation quality of operational controls. You can generate synthetic data to explore different control scenarios. The application provides tools for defining control characteristics, calculating a 'Control Quality Score', and suggesting an appropriate 'Control Substantiation Method'.
 """)
 # Your code starts here
 page = st.sidebar.selectbox(label="Navigation", options=["Evaluate Control", "Analyze Data"])
